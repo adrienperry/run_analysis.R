@@ -1,59 +1,19 @@
-# Source of data for the project:
-# https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
-# This R script does the following:
-# 1. Merges the training and the test sets to create one data set.
+Unzip the source ( https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip )
 
-tmp1 <- read.table("train/X_train.txt")
-tmp2 <- read.table("test/X_test.txt")
-X <- rbind(tmp1, tmp2)
+into a folder on your local drive, say C:\Users\yourname\Documents\R\
 
-tmp1 <- read.table("train/subject_train.txt")
-tmp2 <- read.table("test/subject_test.txt")
-S <- rbind(tmp1, tmp2)
+Put run_analysis.R to C:\Users\yourname\Documents\R\UCI HAR Dataset\
 
-tmp1 <- read.table("train/y_train.txt")
-tmp2 <- read.table("test/y_test.txt")
-Y <- rbind(tmp1, tmp2)
+in RStudio: setwd("C:\\Users\\yourname\\Documents\\R\\UCI HAR Dataset\\")
 
-# 2. Extracts only the measurements on the mean and standard deviation for each measurement.
+and then: source("run_analysis.R")
 
-features <- read.table("features.txt")
-indices_of_good_features <- grep("-mean\\(\\)|-std\\(\\)", features[, 2])
-X <- X[, indices_of_good_features]
-names(X) <- features[indices_of_good_features, 2]
-names(X) <- gsub("\\(|\\)", "", names(X))
-names(X) <- tolower(names(X))  # see last slide of the lecture Editing Text Variables (week 4)
+The latter will run the R script, it will read the dataset and write these files:
 
-# 3. Uses descriptive activity names to name the activities in the data set
+merged_clean_data.txt -- 8.35 Mb, a 10299x68 data frame
 
-activities <- read.table("activity_labels.txt")
-activities[, 2] = gsub("_", "", tolower(as.character(activities[, 2])))
-Y[,1] = activities[Y[,1], 2]
-names(Y) <- "activity"
+data_set_with_the_averages.txt -- 0.225 Mb, a 180x68 data frame
 
-# 4. Appropriately labels the data set with descriptive activity names.
+The script normally runs for ~30 seconds, but the exact number depends on your system.
 
-names(S) <- "subject"
-cleaned <- cbind(S, Y, X)
-write.table(cleaned, "merged_clean_data.txt")
-
-# 5. Creates a 2nd, independent tidy data set with the average of each variable for each activity and each subject.
-
-uniqueSubjects = unique(S)[,1]
-numSubjects = length(unique(S)[,1])
-numActivities = length(activities[,1])
-numCols = dim(cleaned)[2]
-result = cleaned[1:(numSubjects*numActivities), ]
-
-row = 1
-for (s in 1:numSubjects) {
-	for (a in 1:numActivities) {
-		result[row, 1] = uniqueSubjects[s]
-		result[row, 2] = activities[a, 2]
-		tmp <- cleaned[cleaned$subject==s & cleaned$activity==activities[a, 2], ]
-		result[row, 3:numCols] <- colMeans(tmp[, 3:numCols])
-		row = row+1
-	}
-}
-write.table(result, "data_set_with_the_averages.txt")
-
+Use data <- read.table("data_set_with_the_averages.txt") to read the latter. It is 180x68 because there are 30 subjects and 6 activities, thus "for each activity and each subject" means 30*6=180 rows. Note that the provided R script has no assumptions on numbers of records, only on locations of files.
